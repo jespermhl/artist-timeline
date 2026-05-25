@@ -95,11 +95,18 @@ export const timelineEventType = defineType({
         }),
         defineField({
             name: 'image',
-            title: 'Cover Image (Square)',
+            title: 'Cover Image',
             type: 'image',
             options: { hotspot: true },
         }),
     ],
+    orderings: [{
+        name: 'date',
+        title: 'Date',
+        by: [
+            { field: 'date', direction: 'desc' },
+        ],
+    }],
     preview: {
         select: {
             title: 'title',
