@@ -5,15 +5,21 @@ export const ARTIST_TIMELINE_QUERY = defineQuery(`
     name,
     bio,
     image,
-    "events": *[_type == "timelineEvent" && references(^._id)] | order(date desc) {
+    "events": *[_type == "timelineEvent" && references(^._id) && !defined(parentTour)] | order(date desc) {
       title,
       date,
+      toDate, // Add this
       type,
       videoUrl,
       description,
       image,
       tracklist,
-      "parentAlbumTitle": parentAlbum->title
+      "parentAlbumTitle": parentAlbum->title,
+      "subEvents": *[_type == "timelineEvent" && references(^._id)] | order(date asc) {
+        title,
+        date,
+        description
+      }
     }
   }
 `)

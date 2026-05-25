@@ -3,36 +3,56 @@ import { defineField, defineType } from 'sanity'
 export const timelineEventType = defineType({
     name: 'timelineEvent',
     title: 'Timeline Event',
-    type: 'document',
+    type: 'document', // This is what tells Sanity it's a manual entry form
     fields: [
         defineField({
             name: 'artist',
+            title: 'Artist',
             type: 'reference',
             to: [{ type: 'artist' }],
             validation: (Rule) => Rule.required(),
         }),
         defineField({
             name: 'title',
+            title: 'Event Title',
             type: 'string',
-            title: 'Event Title (e.g. Album Name or Tour Name)',
+            description: 'e.g., "After Hours", "The Eras Tour", or "Starboy Music Video"',
             validation: (Rule) => Rule.required(),
         }),
         defineField({
             name: 'date',
+            title: 'Date / Start Date',
             type: 'date',
+            description: 'Release date or the opening night of a tour.',
             validation: (Rule) => Rule.required(),
         }),
         defineField({
-            name: 'tracklist',
-            type: 'array',
-            title: 'Tracklist',
-            of: [{ type: 'string' }],
-            hidden: ({ document }) => document?.type !== 'album' && document?.type !== 'single',
+            name: 'toDate',
+            title: 'End Date',
+            type: 'date',
+            description: 'Only for Tours: When did the tour end?',
+            hidden: ({ document }) => document?.type !== 'tour',
+        }),
+        defineField({
+            name: 'type',
+            title: 'Event Type',
+            type: 'string',
+            options: {
+                list: [
+                    { title: 'Album Release', value: 'album' },
+                    { title: 'Single Release', value: 'single' },
+                    { title: 'Music Video', value: 'video' },
+                    { title: 'Tour (Main Event)', value: 'tour' },
+                    { title: 'Individual Concert', value: 'concert' },
+                    { title: 'Festival Appearance', value: 'festival' },
+                ],
+            },
+            validation: (Rule) => Rule.required(),
         }),
         defineField({
             name: 'parentAlbum',
-            title: 'Part of Album (Optional)',
-            description: 'If this is a single, you can link it to the main Album event later',
+            title: 'Belongs to Album (Optional)',
+            description: 'If this is a single, link it to the main album it belongs to.',
             type: 'reference',
             to: [{ type: 'timelineEvent' }],
             options: {
@@ -41,33 +61,50 @@ export const timelineEventType = defineType({
             hidden: ({ document }) => document?.type !== 'single',
         }),
         defineField({
-            name: 'type',
-            type: 'string',
+            name: 'parentTour',
+            title: 'Belongs to Tour (Optional)',
+            description: 'If this is a concert, link it to the main Tour it belongs to.',
+            type: 'reference',
+            to: [{ type: 'timelineEvent' }],
             options: {
-                list: [
-                    { title: 'Music Video', value: 'video' },
-                    { title: 'Album Release', value: 'album' },
-                    { title: 'Single Release', value: 'single' },
-                    { title: 'Concert/Gig', value: 'concert' },
-                    { title: 'Festival', value: 'festival' },
-                ],
+                filter: 'type == "tour"'
             },
-            validation: (Rule) => Rule.required(),
+            hidden: ({ document }) => document?.type !== 'concert',
+        }),
+        defineField({
+            name: 'tracklist',
+            title: 'Tracklist',
+            type: 'array',
+            of: [{ type: 'string' }],
+            hidden: ({ document }) => document?.type !== 'album' && document?.type !== 'single',
         }),
         defineField({
             name: 'videoUrl',
+            title: 'YouTube / Video Link',
             type: 'url',
-            title: 'YouTube URL',
-            hidden: ({ document }) => document?.type !== 'video' && document?.type !== 'concert',
+            hidden: ({ document }) =>
+                document?.type !== 'video' &&
+                document?.type !== 'concert' &&
+                document?.type !== 'single',
         }),
         defineField({
             name: 'description',
+            title: 'Description/Notes',
             type: 'text',
+            rows: 3,
         }),
         defineField({
             name: 'image',
+            title: 'Cover Image (Square)',
             type: 'image',
             options: { hotspot: true },
         }),
     ],
+    preview: {
+        select: {
+            title: 'title',
+            subtitle: 'type',
+            media: 'image',
+        },
+    },
 })

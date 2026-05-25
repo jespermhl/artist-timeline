@@ -88,26 +88,24 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
                             className={`flex flex-col md:flex-row gap-16 md:gap-32 items-center ${index % 2 === 0 ? "" : "md:flex-row-reverse"
                                 }`}
                         >
-                            {/* IMAGE PORTION */}
+                            {/* IMAGE PORTION (Flexible Aspect Ratio) */}
                             <div className="w-full md:w-1/2 relative group">
                                 <div className="absolute -inset-4 bg-blue-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
-                                <div className="relative aspect-square w-full overflow-hidden border border-white/10 p-2 bg-zinc-900/50 backdrop-blur-xl group-hover:border-blue-500/50 transition-all duration-700">
-                                    {/* Find this section inside your map */}
-                                    {event.image ? (
+
+                                <div className="relative w-full overflow-hidden border border-white/10 p-2 bg-zinc-900/50 backdrop-blur-xl group-hover:border-blue-500/50 transition-all duration-700">
+                                    {event.image && (
                                         <Image
-                                            src={urlFor(event.image).width(1200).height(1200).fit("crop").url()}
+                                            src={urlFor(event.image).width(1000).url()} // We only define width, height remains auto
                                             alt={event.title}
-                                            fill
-                                            className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
+                                            width={1000}
+                                            height={1000} // These are required by Next.js but overridden by classes below
+                                            className="w-full h-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-1000 ease-out group-hover:scale-[1.02]"
                                         />
-                                    ) : (
-                                        <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-800 italic text-xs">
-                                            No visual archive available
-                                        </div>
                                     )}
+
                                     {/* Digital Timestamp Overlay */}
-                                    <div className="absolute bottom-6 right-6 mix-blend-difference font-mono text-xs text-white">
-                                        REF_{index.toString().padStart(3, "0")}
+                                    <div className="absolute bottom-6 right-6 mix-blend-difference font-mono text-[10px] text-white opacity-50 uppercase tracking-tighter">
+                                        {event.type}_DATA_{format(new Date(event.date), "yyyy")}
                                     </div>
                                 </div>
                             </div>
@@ -115,18 +113,21 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
                             {/* CONTENT PORTION */}
                             <div className="w-full md:w-1/2 space-y-10">
                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-6">
-                                        <span className="h-[1px] w-12 bg-blue-500" />
-                                        <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.3em]">
+                                    <div className="flex items-center gap-4">
+                                        <span className="px-2 py-1 border border-blue-500/50 text-blue-400 text-[10px] uppercase font-mono tracking-widest">
                                             {event.type}
                                         </span>
+                                        <span className="text-zinc-500 font-mono text-xs italic">
+                                            {event.type === 'tour' && event.toDate
+                                                ? `${format(new Date(event.date), "MMMM dd, yyyy")} ${event.toDate ? '— ' + format(new Date(event.toDate), "MMMM dd, yyyy") : ''}`
+                                                : format(new Date(event.date), "MMMM dd, yyyy")
+                                            }
+                                        </span>
                                     </div>
+
                                     <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-none">
                                         {event.title}
                                     </h2>
-                                    <p className="text-zinc-500 font-mono text-sm">
-                                        RELEASED // {format(new Date(event.date), "dd.MM.yyyy")}
-                                    </p>
                                 </div>
 
                                 <p className="text-zinc-400 text-xl leading-relaxed font-light">
@@ -160,6 +161,37 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
                                         <span className="relative z-10 text-xs font-black uppercase tracking-widest group-hover/btn:text-black">Play Visual Archive</span>
                                         <span className="relative z-10 text-blue-500 group-hover/btn:text-black">→</span>
                                     </a>
+                                )}
+
+                                {/* TOURS & SUB-EVENTS SECTION */}
+                                {event.type === 'tour' && event.subEvents && event.subEvents.length > 0 && (
+                                    <div className="mt-8 space-y-4">
+                                        <div className="flex items-center gap-2">
+                                            <div className="w-2 h-2 rounded-full bg-blue-500 animate-pulse" />
+                                            <h3 className="text-[10px] uppercase tracking-[0.3em] font-bold text-zinc-500">Live Iterations ({event.subEvents.length})</h3>
+                                        </div>
+
+                                        <div className="relative pl-4 border-l border-zinc-800 space-y-6">
+                                            {event.subEvents.map((sub: any, i: number) => (
+                                                <div key={i} className="relative group/touritem">
+                                                    {/* Connecting dot */}
+                                                    <div className="absolute -left-[21px] top-1.5 w-2 h-2 rounded-full bg-zinc-800 group-hover/touritem:bg-blue-500 transition-colors" />
+
+                                                    <div className="flex flex-col">
+                                                        <span className="text-[10px] font-mono text-zinc-600">
+                                                            {format(new Date(sub.date), "MMM dd, yyyy")}
+                                                        </span>
+                                                        <span className="text-sm font-medium text-zinc-300 group-hover/touritem:text-white transition-colors">
+                                                            {sub.title}
+                                                        </span>
+                                                        {sub.description && (
+                                                            <span className="text-xs text-zinc-500 leading-tight mt-1">{sub.description}</span>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
                                 )}
                             </div>
                         </motion.div>
