@@ -5,11 +5,11 @@ import { ARTIST_TIMELINE_QUERY } from "@/sanity/lib/queries";
 import { format } from "date-fns";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import imageUrlBuilder from "@sanity/image-url";
+import { createImageUrlBuilder } from "@sanity/image-url";
 import { motion, useScroll, useSpring } from "framer-motion";
 import { useEffect, useState } from "react";
 
-const builder = imageUrlBuilder(client);
+const builder = createImageUrlBuilder(client);
 const urlFor = (source: any) => builder.image(source);
 
 export default function ArtistTimelinePage({ params }: { params: any }) {
@@ -56,7 +56,7 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
                         initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
                         className="text-blue-500 font-mono text-xs tracking-[0.5em] uppercase mb-8"
                     >
-                        Musical Anthology — Vol. 1
+                        ARTIST ANTHOLOGY
                     </motion.p>
                     <motion.h1
                         initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
@@ -99,7 +99,7 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
                                             alt={event.title}
                                             width={1000}
                                             height={1000} // These are required by Next.js but overridden by classes below
-                                            className="w-full h-auto object-contain grayscale group-hover:grayscale-0 transition-all duration-1000 ease-out group-hover:scale-[1.02]"
+                                            className="w-full h-auto object-contain transition-all duration-1000 ease-out group-hover:scale-[1.02]"
                                         />
                                     )}
 
