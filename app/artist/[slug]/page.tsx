@@ -1,112 +1,177 @@
+"use client"; // We use Framer Motion, so this needs to be a client component
+
 import { client } from "@/sanity/lib/client";
 import { ARTIST_TIMELINE_QUERY } from "@/sanity/lib/queries";
 import { format } from "date-fns";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import imageUrlBuilder from '@sanity/image-url';
+import imageUrlBuilder from "@sanity/image-url";
+import { motion, useScroll, useSpring } from "framer-motion";
+import { useEffect, useState } from "react";
 
 const builder = imageUrlBuilder(client);
-function urlFor(source: any) {
-    return builder.image(source);
-}
+const urlFor = (source: any) => builder.image(source);
 
-export default async function ArtistTimelinePage({
-    params,
-}: {
-    params: Promise<{ slug: string }>;
-}) {
-    const { slug } = await params;
-    const artist = await client.fetch(ARTIST_TIMELINE_QUERY, { slug });
+export default function ArtistTimelinePage({ params }: { params: any }) {
+    const [artist, setArtist] = useState<any>(null);
+    const { scrollYProgress } = useScroll();
+    const scaleX = useSpring(scrollYProgress, {
+        stiffness: 100,
+        damping: 30,
+        restDelta: 0.001,
+    });
 
-    if (!artist) {
-        notFound();
-    }
+    useEffect(() => {
+        params.then((p: any) => {
+            client.fetch(ARTIST_TIMELINE_QUERY, { slug: p.slug }).then(setArtist);
+        });
+    }, [params]);
+
+    if (!artist) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono uppercase tracking-[1em] animate-pulse">Loading Archive...</div>;
 
     return (
-        <main className="min-h-screen bg-[#09090b] text-zinc-100 selection:bg-blue-500/30">
-            {/* Hero Header */}
-            <header className="relative h-[40vh] flex items-center justify-center overflow-hidden border-b border-zinc-800/50">
-                {artist.image && (
-                    <div className="absolute inset-0 opacity-30 blur-2xl scale-110">
-                        <Image src={urlFor(artist.image).url()} alt="" fill className="object-cover" />
-                    </div>
-                )}
-                <div className="relative z-10 text-center space-y-4">
-                    <h1 className="text-7xl font-black tracking-tighter sm:text-8xl italic uppercase">
+        <main className="bg-[#050505] text-zinc-100 font-sans antialiased overflow-x-hidden">
+            {/* Progress Bar */}
+            <motion.div className="fixed top-0 left-0 right-0 h-1 bg-blue-600 z-50 origin-[0%]" style={{ scaleX }} />
+
+            {/* --- SECTION 1: THE BRUTALIST HERO --- */}
+            <section className="relative h-screen w-full flex items-center justify-center overflow-hidden border-b border-white/10">
+                <div className="absolute inset-0 z-0">
+                    {artist.image && (
+                        <>
+                            <Image
+                                src={urlFor(artist.image).width(2000).url()}
+                                alt=""
+                                fill
+                                className="object-cover opacity-40 scale-105 blur-[2px]"
+                                priority // Add priority here for better loading
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-b from-black/0 via-black/40 to-[#050505]" />
+                        </>
+                    )}
+                </div>
+
+                <div className="relative z-10 w-full px-6 flex flex-col items-center">
+                    <motion.p
+                        initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
+                        className="text-blue-500 font-mono text-xs tracking-[0.5em] uppercase mb-8"
+                    >
+                        Musical Anthology — Vol. 1
+                    </motion.p>
+                    <motion.h1
+                        initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}
+                        transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+                        className="text-[18vw] leading-[0.75] font-black uppercase text-center italic tracking-tighter"
+                    >
                         {artist.name}
-                    </h1>
-                    <p className="text-zinc-400 max-w-lg mx-auto font-medium leading-relaxed">
+                    </motion.h1>
+                    <motion.div
+                        initial={{ width: 0 }} animate={{ width: "100px" }} transition={{ delay: 0.5, duration: 1 }}
+                        className="h-[1px] bg-white my-12"
+                    />
+                    <p className="max-w-xl text-center text-zinc-400 text-lg md:text-xl font-light leading-relaxed">
                         {artist.bio}
                     </p>
                 </div>
-            </header>
+            </section>
 
-            {/* Timeline Section */}
-            <div className="max-w-5xl mx-auto px-6 py-24 relative">
-                {/* Glow Line */}
-                <div className="absolute left-8 md:left-1/2 top-24 bottom-24 w-[1px] bg-gradient-to-b from-transparent via-zinc-700 to-transparent md:-translate-x-1/2" />
-
-                <div className="space-y-32">
+            {/* --- SECTION 2: THE TIMELINE --- */}
+            <div className="max-w-[1400px] mx-auto px-6 py-40">
+                <div className="space-y-[30vh]">
                     {artist.events?.map((event: any, index: number) => (
-                        <div key={index} className="relative flex items-start justify-between md:justify-normal md:odd:flex-row-reverse group">
-
-                            {/* Center Icon/Dot */}
-                            <div className="absolute left-[33px] md:left-1/2 transform -translate-x-1/2 mt-1.5 w-3 h-3 rounded-full bg-zinc-900 border border-zinc-500 z-20 group-hover:scale-150 group-hover:bg-blue-500 group-hover:border-blue-400 transition-all duration-300" />
-
-                            {/* Content Box */}
-                            <div className="pl-16 md:pl-0 md:w-[42%] transition-all duration-500">
-                                <div className="space-y-4">
-                                    {/* Date & Badge */}
-                                    <div className="flex items-center gap-3 font-mono text-xs tracking-widest text-zinc-500">
-                                        <span className="uppercase">{format(new Date(event.date), "MMM yyyy")}</span>
-                                        <span className="w-4 h-[1px] bg-zinc-800" />
-                                        <span className="text-blue-500 uppercase">{event.type}</span>
-                                    </div>
-
-                                    {/* Image/Cover Wrapper (Square 1:1) */}
-                                    {event.image && (
-                                        <div className="relative aspect-square w-full max-w-[350px] rounded-sm overflow-hidden border border-zinc-800 shadow-2xl group-hover:border-zinc-500 transition-all duration-500">
-                                            <Image
-                                                src={urlFor(event.image).width(600).height(600).fit('crop').url()}
-                                                alt={event.title}
-                                                fill
-                                                className="object-cover group-hover:scale-110 transition-transform duration-1000 ease-out"
-                                            />
-
-                                            {/* Subtle overlay to make text pop if needed */}
-                                            <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent shadow-inner" />
+                        <motion.div
+                            key={index}
+                            initial={{ opacity: 0, y: 100 }}
+                            whileInView={{ opacity: 1, y: 0 }}
+                            viewport={{ once: true, margin: "-10%" }}
+                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                            className={`flex flex-col md:flex-row gap-16 md:gap-32 items-center ${index % 2 === 0 ? "" : "md:flex-row-reverse"
+                                }`}
+                        >
+                            {/* IMAGE PORTION */}
+                            <div className="w-full md:w-1/2 relative group">
+                                <div className="absolute -inset-4 bg-blue-500/5 blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
+                                <div className="relative aspect-square w-full overflow-hidden border border-white/10 p-2 bg-zinc-900/50 backdrop-blur-xl group-hover:border-blue-500/50 transition-all duration-700">
+                                    {/* Find this section inside your map */}
+                                    {event.image ? (
+                                        <Image
+                                            src={urlFor(event.image).width(1200).height(1200).fit("crop").url()}
+                                            alt={event.title}
+                                            fill
+                                            className="object-cover transition-transform duration-[2000ms] ease-out group-hover:scale-110"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-zinc-900 flex items-center justify-center text-zinc-800 italic text-xs">
+                                            No visual archive available
                                         </div>
                                     )}
-
-                                    {/* Text Details */}
-                                    <div className="space-y-2">
-                                        <h2 className="text-2xl font-bold tracking-tight text-white group-hover:text-blue-400 transition-colors">
-                                            {event.title}
-                                        </h2>
-                                        <p className="text-zinc-400 leading-relaxed text-sm">
-                                            {event.description}
-                                        </p>
+                                    {/* Digital Timestamp Overlay */}
+                                    <div className="absolute bottom-6 right-6 mix-blend-difference font-mono text-xs text-white">
+                                        REF_{index.toString().padStart(3, "0")}
                                     </div>
-
-                                    {/* Action Link */}
-                                    {event.videoUrl && (
-                                        <a
-                                            href={event.videoUrl}
-                                            target="_blank"
-                                            className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-white hover:text-blue-400 transition-colors pt-2"
-                                        >
-                                            <div className="w-8 h-8 rounded-full border border-zinc-800 flex items-center justify-center group-hover:border-blue-500/50 group-hover:bg-blue-500/10">
-                                                ▶
-                                            </div>
-                                            Watch Performance
-                                        </a>
-                                    )}
                                 </div>
                             </div>
-                        </div>
+
+                            {/* CONTENT PORTION */}
+                            <div className="w-full md:w-1/2 space-y-10">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-6">
+                                        <span className="h-[1px] w-12 bg-blue-500" />
+                                        <span className="text-blue-500 font-mono text-xs uppercase tracking-[0.3em]">
+                                            {event.type}
+                                        </span>
+                                    </div>
+                                    <h2 className="text-6xl md:text-8xl font-black tracking-tighter uppercase leading-none">
+                                        {event.title}
+                                    </h2>
+                                    <p className="text-zinc-500 font-mono text-sm">
+                                        RELEASED // {format(new Date(event.date), "dd.MM.yyyy")}
+                                    </p>
+                                </div>
+
+                                <p className="text-zinc-400 text-xl leading-relaxed font-light">
+                                    {event.description}
+                                </p>
+
+                                {/* TRACKLIST: The "Technical Card" */}
+                                {event.tracklist && (
+                                    <div className="relative mt-12 p-1 border-t border-b border-white/10 group/list hover:border-blue-500/30 transition-colors py-8">
+                                        <div className="flex justify-between items-end mb-8">
+                                            <h3 className="text-[10px] font-bold uppercase tracking-[0.5em] text-zinc-600">Track Manifest</h3>
+                                            <span className="text-[10px] font-mono text-zinc-700">{event.tracklist.length} SENSORY_INPUTS</span>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            {event.tracklist.map((track: string, i: number) => (
+                                                <div key={i} className="flex items-center group/item py-1">
+                                                    <span className="w-8 text-[10px] font-mono text-zinc-700 group-hover/item:text-blue-500">{(i + 1).toString().padStart(2, '0')}</span>
+                                                    <span className="flex-1 text-sm uppercase tracking-tight group-hover/item:translate-x-2 transition-transform duration-300">{track}</span>
+                                                    <div className="w-0 group-hover/item:w-12 h-[1px] bg-blue-500 transition-all duration-300" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {/* THE ACTION: Video with an Animated Glow */}
+                                {event.videoUrl && (
+                                    <a href={event.videoUrl} target="_blank" className="relative inline-flex items-center gap-4 py-4 px-8 border border-white group/btn overflow-hidden">
+                                        <div className="absolute inset-0 bg-white translate-y-[101%] group-hover/btn:translate-y-0 transition-transform duration-500 ease-[0.16, 1, 0.3, 1]" />
+                                        <span className="relative z-10 text-xs font-black uppercase tracking-widest group-hover/btn:text-black">Play Visual Archive</span>
+                                        <span className="relative z-10 text-blue-500 group-hover/btn:text-black">→</span>
+                                    </a>
+                                )}
+                            </div>
+                        </motion.div>
                     ))}
                 </div>
             </div>
+
+            {/* --- FOOTER: MINIMAL --- */}
+            <footer className="h-screen flex flex-col items-center justify-center border-t border-white/5 space-y-8">
+                <h2 className="text-[10vw] font-black opacity-10 tracking-tighter">FIN</h2>
+                <p className="font-mono text-[10px] uppercase tracking-[1em] text-zinc-700 italic">Timeline Authenticated</p>
+            </footer>
         </main>
     );
 }
