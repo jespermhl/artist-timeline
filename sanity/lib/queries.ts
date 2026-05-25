@@ -1,4 +1,4 @@
-import { defineQuery } from 'next-sanity'
+import { defineQuery } from "next-sanity";
 
 export const ARTIST_TIMELINE_QUERY = defineQuery(`
   *[_type == "artist" && slug.current == $slug][0]{
@@ -11,7 +11,9 @@ export const ARTIST_TIMELINE_QUERY = defineQuery(`
       type,
       videoUrl,
       description,
-      image
+      image,
+      tracklist,
+      "parentAlbumTitle": parentAlbum->title
     }
   }
 `)

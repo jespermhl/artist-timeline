@@ -23,6 +23,24 @@ export const timelineEventType = defineType({
             validation: (Rule) => Rule.required(),
         }),
         defineField({
+            name: 'tracklist',
+            type: 'array',
+            title: 'Tracklist',
+            of: [{ type: 'string' }],
+            hidden: ({ document }) => document?.type !== 'album' && document?.type !== 'single',
+        }),
+        defineField({
+            name: 'parentAlbum',
+            title: 'Part of Album (Optional)',
+            description: 'If this is a single, you can link it to the main Album event later',
+            type: 'reference',
+            to: [{ type: 'timelineEvent' }],
+            options: {
+                filter: 'type == "album"'
+            },
+            hidden: ({ document }) => document?.type !== 'single',
+        }),
+        defineField({
             name: 'type',
             type: 'string',
             options: {
