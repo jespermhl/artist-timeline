@@ -3,7 +3,15 @@ import { defineField, defineType } from 'sanity'
 export const timelineEventType = defineType({
     name: 'timelineEvent',
     title: 'Timeline Event',
-    type: 'document', // This is what tells Sanity it's a manual entry form
+    type: 'document',
+    groups: [
+        { name: 'main', title: 'Basic Info' },
+        { name: 'details', title: 'Content & Media' },
+        { name: 'relations', title: 'Relations' },
+    ],
+    fieldsets: [
+        { name: 'timing', title: 'Timing & Duration' }
+    ],
     fields: [
         defineField({
             name: 'artist',
@@ -11,6 +19,7 @@ export const timelineEventType = defineType({
             type: 'reference',
             to: [{ type: 'artist' }],
             validation: (Rule) => Rule.required(),
+            group: 'main',
         }),
         defineField({
             name: 'title',
@@ -18,12 +27,14 @@ export const timelineEventType = defineType({
             type: 'string',
             description: 'e.g., "After Hours", "The Eras Tour", or "Starboy Music Video"',
             validation: (Rule) => Rule.required(),
+            group: 'main',
         }),
         defineField({
             name: 'date',
             title: 'Date / Start Date',
             type: 'date',
             description: 'Release date or the opening night of a tour.',
+            fieldset: 'timing',
             validation: (Rule) => Rule.required(),
         }),
         defineField({
@@ -32,6 +43,8 @@ export const timelineEventType = defineType({
             type: 'date',
             description: 'Only for Tours: When did the tour end?',
             hidden: ({ document }) => document?.type !== 'tour',
+            fieldset: 'timing',
+            group: 'main',
         }),
         defineField({
             name: 'type',
@@ -48,6 +61,7 @@ export const timelineEventType = defineType({
                 ],
             },
             validation: (Rule) => Rule.required(),
+            group: 'main',
         }),
         defineField({
             name: 'parentAlbum',
@@ -59,6 +73,7 @@ export const timelineEventType = defineType({
                 filter: 'type == "album"'
             },
             hidden: ({ document }) => document?.type !== 'single',
+            group: 'relations',
         }),
         defineField({
             name: 'parentTour',
@@ -70,6 +85,7 @@ export const timelineEventType = defineType({
                 filter: 'type == "tour"'
             },
             hidden: ({ document }) => document?.type !== 'concert',
+            group: 'relations',
         }),
         defineField({
             name: 'tracklist',
@@ -77,6 +93,7 @@ export const timelineEventType = defineType({
             type: 'array',
             of: [{ type: 'string' }],
             hidden: ({ document }) => document?.type !== 'album' && document?.type !== 'single',
+            group: 'details',
         }),
         defineField({
             name: 'videoUrl',
@@ -86,18 +103,21 @@ export const timelineEventType = defineType({
                 document?.type !== 'video' &&
                 document?.type !== 'concert' &&
                 document?.type !== 'single',
+            group: 'details',
         }),
         defineField({
             name: 'description',
             title: 'Description/Notes',
             type: 'text',
             rows: 3,
+            group: 'details',
         }),
         defineField({
             name: 'image',
             title: 'Cover Image',
             type: 'image',
             options: { hotspot: true },
+            group: 'details',
         }),
     ],
     orderings: [{
