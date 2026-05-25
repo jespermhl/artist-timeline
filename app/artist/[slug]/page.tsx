@@ -1,19 +1,23 @@
-"use client"; // We use Framer Motion, so this needs to be a client component
+"use client";
 
 import { client } from "@/sanity/lib/client";
 import { ARTIST_TIMELINE_QUERY } from "@/sanity/lib/queries";
 import { format } from "date-fns";
 import Image from "next/image";
 import { notFound } from "next/navigation";
-import { createImageUrlBuilder } from "@sanity/image-url";
+import imageUrlBuilder from "@sanity/image-url";
 import { motion, useScroll, useSpring } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, use } from "react"; // Added 'use'
 
-const builder = createImageUrlBuilder(client);
+const builder = imageUrlBuilder(client);
 const urlFor = (source: any) => builder.image(source);
 
-export default function ArtistTimelinePage({ params }: { params: any }) {
+export default function ArtistTimelinePage({ params: paramsPromise }: { params: Promise<{ slug: string }> }) {
+    // 1. Unwrap the params properly for Next.js 15
+    const params = use(paramsPromise);
     const [artist, setArtist] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
+
     const { scrollYProgress } = useScroll();
     const scaleX = useSpring(scrollYProgress, {
         stiffness: 100,
@@ -21,13 +25,35 @@ export default function ArtistTimelinePage({ params }: { params: any }) {
         restDelta: 0.001,
     });
 
+    // 2. Optimized Fetching
     useEffect(() => {
-        params.then((p: any) => {
-            client.fetch(ARTIST_TIMELINE_QUERY, { slug: p.slug }).then(setArtist);
-        });
-    }, [params]);
+        async function fetchData() {
+            try {
+                const data = await client.fetch(ARTIST_TIMELINE_QUERY, { slug: params.slug });
+                setArtist(data);
+            } catch (error) {
+                console.error("Sanity Fetch Error:", error);
+            } finally {
+                setLoading(false);
+            }
+        }
+        fetchData();
+    }, [params.slug]);
 
-    if (!artist) return <div className="min-h-screen bg-black flex items-center justify-center text-white font-mono uppercase tracking-[1em] animate-pulse">Loading Archive...</div>;
+    if (loading) {
+        return (
+            <div className="min-h-screen bg-black flex flex-col items-center justify-center text-white font-mono uppercase tracking-[1em]">
+                <motion.div
+                    animate={{ opacity: [0.3, 1, 0.3] }}
+                    transition={{ duration: 1.5, repeat: Infinity }}
+                >
+                    Loading Archive
+                </motion.div>
+            </div>
+        );
+    }
+
+    if (!artist) return notFound();
 
     return (
         <main className="bg-[#050505] text-zinc-100 font-sans antialiased overflow-x-hidden">
